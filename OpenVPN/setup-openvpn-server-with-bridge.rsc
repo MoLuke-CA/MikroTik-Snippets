@@ -4,14 +4,15 @@
 
 
 
-:local dryrun false
+:local dryrun true
 :local SETbr false
 :local SETip false
 :local SETpool false
 :local SETfw false
-:local SETcrt true
+:local SETcrt false
 :local SETovpnsrv false
-:local SETcrl true
+:local SETcrl false
+:local SETadduser true
 
 
 :local CAname "MYCA01"
@@ -46,6 +47,9 @@
 :set OVPNCiphers "aes128-cbc,aes192-cbc,aes256-cbc"
 :set OVPNCiphers "aes128-gcm,aes192-gcm,aes256-gcm"
 :set OVPNCiphers "aes128-cbc,aes192-cbc,aes256-cbc,aes128-gcm,aes192-gcm,aes256-gcm"
+
+:local OVPNUsers  {"user1";"user2"}
+:local OVPNPasses {"pass1*pass1";"pass2*pass2"}
 
 
 :local logmsg "$app: script started"
@@ -174,7 +178,7 @@
    
 
 
-:for count from=0 to=[:len $cmds] do={
+:for count from=0 to=([:len $cmds]-1) do={
    :local cmd ($cmds->$count)
    :local logdata ($logs->$count)
    :if ($dryrun) do={
@@ -233,19 +237,33 @@
    :set ($logs->1) "setting up openvpn server"
 
 
-   :for count from=0 to=[:len $cmds] do={
+   :for count from=0 to=([:len $cmds]-1) do={
       :local cmd ($cmds->$count)
       :local logdata ($logs->$count)
       :if ($dryrun) do={
-         :put $logdata
+         :put ("#".$logdata)
          :put $cmd
        } else={
          :log info  ($app . ":" . $logdata )
          [:parse $cmd]
       }
    }
+}
 
+:if ($SETadduser) do={
+    :put [:len $OVPNUsers]
+    :for count from=0 to=([:len $OVPNUsers]-1) do={
+        :local cmd  ("/ppp secret add name=\"".($OVPNUsers->$count)."\" password=\"".($OVPNPasses->$count)."\" profile=profile_ovpn service=ovpn")
+        :local logdata ("creating user:".($OVPNUsers->$count))
+        :if ($dryrun) do={
+           :put ("#".$logdata)
+           :put $cmd
+      } else={
+           :log info  ($app . ":" . $logdata )
+           [:parse $cmd]
+      }
 
+    }
 }
 :log info ($app  . ": finishd")
 }
