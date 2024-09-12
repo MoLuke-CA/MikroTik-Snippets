@@ -21,7 +21,7 @@
 :local CAorg "Company"
 :local CAunit "Sysadmin"
 :local CAcommonname "MYCA01-common"
-:local CAcommonname "ca-gw.dyn-payam124.com"
+:local CAcommonname "domain.dyn-payam124.com"
 :local CAkeysize "4096"
 #days, 10years
 :local CAvalidity "3650" 
