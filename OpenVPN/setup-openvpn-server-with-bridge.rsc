@@ -220,17 +220,18 @@
 :if ($SETovpnsrv) do={
    :local cmds [:toarray ""]
    :local logs [:toarray ""]
+   
+   :set ($cmds->0) ("/ppp profile add bridge=bridge-vpn local-address=$SRVBRIP name=profile_ovpn remote-address=pool-vpn")
+   :set ($logs->0) ("adding ppp profile")
 
-   :set ($cmds->0) ("/interface ovpn-server server" . \
+   :set ($cmds->1) ("/interface ovpn-server server" . \
                " set auth=sha1 certificate=$SRVname cipher=aes128-cbc,aes192-cbc,aes256-cbc " . \
-               "default-profile=default-encryption enable-tun-ipv6=no enabled=yes ipv6-prefix-len=64 ". \
+               "default-profile="."profile_ovpn"." enable-tun-ipv6=no enabled=yes ipv6-prefix-len=64 ". \
                "keepalive-timeout=60  max-mtu=1500 mode=ip netmask=24 port=$OVPNPort " . \
                "protocol=tcp redirect-gateway=disabled reneg-sec=3600 require-client-certificate=yes " . \
                "tls-version=any tun-server-ipv6=::")
-   :set ($logs->0) "setting up openvpn server"
+   :set ($logs->1) "setting up openvpn server"
 
-   :set ($cmds->1) ("/ppp profile add bridge=bridge-vpn local-address=$SRVBRIP name=profile_ovpn remote-address=pool-vpn")
-   :set ($logs->1) ("adding ppp profile")
 
    :for count from=0 to=[:len $cmds] do={
       :local cmd ($cmds->$count)
