@@ -1,17 +1,25 @@
 {
-:local app "App_OVPNSRV_v0.3"
+:local app "App_OVPNSRV_v0.4"
 :log info "$app:started"
 
 
-
+#dry run, only print commands on screen
 :local dryrun true
-:local SETbr false
-:local SETip false
-:local SETpool false
-:local SETfw false
-:local SETcrt false
-:local SETovpnsrv false
-:local SETcrl false
+#setup a bridge, for VPN, 
+:local SETbr true
+#Add IP to the above birdge
+:local SETip true
+#Add IP Pool for ovpn clients
+:local SETpool true
+#Allow incoming openvpn connections + NATING all traffic from ovpn clinets
+:local SETfw true
+#generate Certificate for CA, Server and Clinet
+:local SETcrt true
+#implement local Certificate Recvokation List
+:local SETcrl true
+#setup and enable openvpn server and ovpn ppp profile
+:local SETovpnsrv true
+#add PPP users
 :local SETadduser true
 
 
@@ -35,17 +43,20 @@
 :local CL01commonname "CLIENT01"
 :local CL01exportpass "12345678"
 
-
+#this IP will be set on bridge. must have netmask, and will be used as the "local-address" for openvpn-connections
 :local SRVBRIP "192.168.211.1/24"
 :local VPNPool "192.168.211.100-192.168.211.200"
 :local NATRange "192.168.211.0/24"
 
 
 :local OVPNPort "1194"
-#v6, does not support gcm
+:local OVPNProto "tcp"
 :local OVPNCiphers ""
+#version 6, does not support gcm
 :set OVPNCiphers "aes128-cbc,aes192-cbc,aes256-cbc"
+#version 7, supports gcm
 :set OVPNCiphers "aes128-gcm,aes192-gcm,aes256-gcm"
+#if you want to support both
 :set OVPNCiphers "aes128-cbc,aes192-cbc,aes256-cbc,aes128-gcm,aes192-gcm,aes256-gcm"
 
 :local OVPNUsers  {"user1";"user2"}
@@ -106,7 +117,7 @@
 
 :if ($SETfw) do={
    :local cmds [:toarray ""]
-   :local cmd1  ("/ip firewall filter add chain=input action=accept comment=\"#MLK#OVPN pass\" protocol=udp dst-port=1194")
+   :local cmd1  ("/ip firewall filter add chain=input action=accept comment=\"#MLK#OVPN pass\" protocol=".$OVPNProto. " dst-port=".$OVPNPort)
    :if ([:len [/ip firewal filter find]] >0) do={ 
       :set $cmd1 ($cmd1." place-before=1")
    }
@@ -205,6 +216,7 @@
 
 :if ($SETcrl) do={
    :local crlidstr [:pick [/certificate/find where name="$CAname"] 0 ]
+   #convert hex to decimal
    :local crlid  [:tonum ("0x".[:pick $crlidstr 1 [:len $crlidstr]])]
    :local cmd ("/certificate crl add url=http://$CAcrlhost/crl/".$crlid.".crl; /certificate crl download ")
    :local logdata "adding crl"   
@@ -224,16 +236,17 @@
 :if ($SETovpnsrv) do={
    :local cmds [:toarray ""]
    :local logs [:toarray ""]
-   
-   :set ($cmds->0) ("/ppp profile add bridge=bridge-vpn local-address=$SRVBRIP name=profile_ovpn remote-address=pool-vpn")
+   #remove netmask from IP
+   :local SRVBRIPAddr [:pick $SRVBRIP 0 [:find $SRVBRIP "/"]] 
+   :set ($cmds->0) ("/ppp profile add bridge=bridge-vpn local-address=".$SRVBRIPAddr." name=profile_ovpn remote-address=pool-vpn")
    :set ($logs->0) ("adding ppp profile")
 
    :set ($cmds->1) ("/interface ovpn-server server" . \
-               " set auth=sha1 certificate=$SRVname cipher=aes128-cbc,aes192-cbc,aes256-cbc " . \
-               "default-profile="."profile_ovpn"." enable-tun-ipv6=no enabled=yes ipv6-prefix-len=64 ". \
-               "keepalive-timeout=60  max-mtu=1500 mode=ip netmask=24 port=$OVPNPort " . \
-               "protocol=tcp redirect-gateway=disabled reneg-sec=3600 require-client-certificate=yes " . \
-               "tls-version=any tun-server-ipv6=::")
+               " set auth=sha1 certificate=$SRVname cipher=".$OVPNCiphers." " . \
+               " default-profile="."profile_ovpn"." enable-tun-ipv6=no enabled=yes ipv6-prefix-len=64 ". \
+               " keepalive-timeout=60  max-mtu=1500 mode=ip netmask=24 port=".$OVPNPort . \
+               " protocol=".$OVPNProto. " redirect-gateway=disabled reneg-sec=3600 require-client-certificate=yes " . \
+               " tls-version=any tun-server-ipv6=::")
    :set ($logs->1) "setting up openvpn server"
 
 
