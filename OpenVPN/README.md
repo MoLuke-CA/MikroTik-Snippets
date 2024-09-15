@@ -10,10 +10,8 @@ More imprtantly it can implement certificate revocation as well.
 
 - [Features](#features)
 - [Prerequisites](#prerequisites)
-- [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
-- [Exporting Certificates](#exporting-certificates)
 - [License](#license)
 - [Contributing](#contributing)
 - [Support](#support)
@@ -118,3 +116,22 @@ The script is highly configurable. You can adjust the settings by modifying the 
 
 
 
+## License
+This project is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License.
+
+
+You are free to:
+
+Share — copy and redistribute the material in any medium or format.
+Adapt — remix, transform, and build upon the material.
+Under the following terms:
+
+Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made.
+NonCommercial — You may not use the material for commercial purposes without prior permission.
+
+
+## Contributing
+Contributions are welcome! Please submit a pull request or open an issue to discuss improvements or fixes.
+
+## Support
+If you encounter any problems or have questions, feel free to connect through https://www.moluke.com/contact
